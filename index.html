@@ -1,89 +1,55 @@
-<!DOCTYPE html>
-<html lang="no">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BUDSJETT 2024</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 10px; }
-    h1 { color: #333; font-size: 1.5em; text-align: center; }
+const fs = require('fs');
+const path = require('path');
+const XLSX = require('xlsx');
+const WebSocket = require('ws');
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      font-size: 0.9em;
+const filePath = path.join(__dirname, 'data.xlsx'); // Excel-filens plassering
+let previousData = null;
+
+// Opprett WebSocket-server
+const wss = new WebSocket.Server({ port: 8080 });
+
+// Funksjon for å lese Excel-filen og sende data til en klient
+function readExcelData() {
+  const workbook = XLSX.readFile(filePath);
+  const sheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[sheetName];
+  const data = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+  previousData = data;
+}
+
+// Initialiser data når serveren starter
+readExcelData();
+
+// Send data til alle tilkoblede klienter
+function broadcastExcelData() {
+  wss.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(previousData));
     }
+  });
+}
 
-    th, td {
-      padding: 10px;
-      text-align: left;
-      border: 1px solid #ddd;
-    }
+// Når en ny klient kobler til, send de siste dataene umiddelbart
+wss.on('connection', (ws) => {
+  // Send eksisterende data til ny klient
+  if (previousData) {
+    ws.send(JSON.stringify(previousData));
+  }
+});
 
-    th {
-      background-color: #f4f4f4;
-      font-size: 1em;
-    }
+// Les og send oppdateringer til alle klienter ved filendringer
+fs.watchFile(filePath, { interval: 1000 }, () => {
+  const workbook = XLSX.readFile(filePath);
+  const sheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[sheetName];
+  const newData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-    /* Mobilvennlige justeringer */
-    @media (max-width: 600px) {
-      body { margin: 5px; }
-      h1 { font-size: 1.2em; }
-      table, th, td { font-size: 0.8em; }
-      th, td { padding: 5px; }
+  // Sjekk om dataene har endret seg
+  if (JSON.stringify(newData) !== JSON.stringify(previousData)) {
+    previousData = newData;
+    broadcastExcelData(); // Send oppdaterte data til alle klienter
+  }
+});
 
-      /* Slå sammen kolonner som ikke passer på mobil */
-      table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-      }
-    }
-  </style>
-</head>
-<body>
-
-  <h1>BUDSJETT 2024</h1>
-  <table id="excelData"></table>
-
-  <script>
-    const table = document.getElementById('excelData');
-
-    // Opprett WebSocket-forbindelse
-    const socket = new WebSocket('ws://localhost:8080');
-
-    // Be om data når tilkoblingen åpnes
-    socket.onopen = function() {
-      socket.send(JSON.stringify({ request: "initialData" }));
-    };
-
-    socket.onmessage = function(event) {
-      const data = JSON.parse(event.data);
-      updateTable(data);
-    };
-
-    // Funksjon for å oppdatere tabellen med nye data
-    function updateTable(data) {
-      table.innerHTML = '';
-
-      data.forEach((row, rowIndex) => {
-        const rowElement = document.createElement('tr');
-        row.forEach(cell => {
-          const cellElement = rowIndex === 0 ? document.createElement('th') : document.createElement('td');
-
-          // Formatere cellens innhold hvis det er et tall
-          if (!isNaN(cell) && cell !== '') {
-            cellElement.textContent = new Intl.NumberFormat('no-NO', { maximumFractionDigits: 0 }).format(cell);
-          } else {
-            cellElement.textContent = cell || '';
-          }
-
-          rowElement.appendChild(cellElement);
-        });
-        table.appendChild(rowElement);
-      });
-    }
-  </script>
-</body>
-</html>
+console.log('WebSocket-server kjører på ws://localhost:8080');
