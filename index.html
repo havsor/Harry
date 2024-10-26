@@ -59,15 +59,9 @@
       });
     }
 
-    // Hent data fra data.json med cache-busting
-    const timestamp = new Date().getTime();
-    fetch(`data.json?cache=${timestamp}`) // Legger til cache-busting parameter
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
+    // Hent data fra data.json
+    fetch('./data.json')
+      .then(response => response.json())
       .then(data => updateTable(data))
       .catch(error => console.error('Feil ved lasting av data:', error));
   </script>
