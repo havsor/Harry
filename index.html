@@ -59,9 +59,9 @@
       });
     }
 
-    // Hent data fra data.json ved sideinnlasting
-    fetch('https://havsor.github.io/Harry/data.json')
-// Sjekk at denne URL-en samsvarer med plasseringen av data.json i prosjektet
+    // Hent data fra data.json med cache-busting
+    const timestamp = new Date().getTime();
+    fetch(`data.json?cache=${timestamp}`) // Legger til cache-busting parameter
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -73,4 +73,3 @@
   </script>
 </body>
 </html>
-
