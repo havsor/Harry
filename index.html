@@ -60,7 +60,8 @@
     }
 
     // Hent data fra data.json ved sideinnlasting
-    fetch('./data.json') // Sjekk at denne URL-en samsvarer med plasseringen av data.json i prosjektet
+    fetch('https://havsor.github.io/Harry/data.json')
+// Sjekk at denne URL-en samsvarer med plasseringen av data.json i prosjektet
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
