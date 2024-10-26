@@ -53,6 +53,11 @@
     // Opprett WebSocket-forbindelse
     const socket = new WebSocket('ws://localhost:8080');
 
+    // Be om data når tilkoblingen åpnes
+    socket.onopen = function() {
+      socket.send(JSON.stringify({ request: "initialData" }));
+    };
+
     socket.onmessage = function(event) {
       const data = JSON.parse(event.data);
       updateTable(data);
