@@ -66,7 +66,14 @@
         const rowElement = document.createElement('tr');
         row.forEach(cell => {
           const cellElement = rowIndex === 0 ? document.createElement('th') : document.createElement('td');
-          cellElement.textContent = cell || '';
+
+          // Formatere cellens innhold hvis det er et tall
+          if (!isNaN(cell) && cell !== '') {
+            cellElement.textContent = new Intl.NumberFormat('no-NO', { maximumFractionDigits: 0 }).format(cell);
+          } else {
+            cellElement.textContent = cell || '';
+          }
+
           rowElement.appendChild(cellElement);
         });
         table.appendChild(rowElement);
