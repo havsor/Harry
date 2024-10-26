@@ -47,7 +47,7 @@
   <script>
     const table = document.getElementById('excelData');
 
-    // Funksjon for å oppdatere tabellen med nye data
+    // Funksjon for å oppdatere tabellen med data
     function updateTable(data) {
       table.innerHTML = '';
 
@@ -69,19 +69,11 @@
       });
     }
 
-    // Hent data fra HTTP-server ved sideinnlasting
-    fetch('http://localhost:8080/data')
+    // Hent data fra data.json ved sideinnlasting
+    fetch('data.json')
       .then(response => response.json())
       .then(data => updateTable(data))
       .catch(error => console.error('Feil ved lasting av data:', error));
-
-    // Opprett WebSocket-forbindelse for sanntidsoppdateringer
-    const socket = new WebSocket('ws://localhost:8080');
-
-    socket.onmessage = function(event) {
-      const data = JSON.parse(event.data);
-      updateTable(data);
-    };
   </script>
 </body>
 </html>
